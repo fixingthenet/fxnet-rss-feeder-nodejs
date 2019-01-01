@@ -43,16 +43,6 @@ const {
 //     unMarkStory(storyId: ID!): Success
 //   }
 
-//   type Story {
-//     id: ID
-//     title: String
-//     permalink: String
-//     published:  String
-//     body: String
-//     entry_id: String
-//     feed: Feed
-//   }
-
 //   type FeedResult {
 //     id: ID
 //     errors: InputError
@@ -68,12 +58,6 @@ const {
 //     url: String!
 //   }
 
-//   type Feed {
-//     id: ID
-//     name: String!
-//     url: String!
-//   }
-
 //   type InputError {
 //     base: String
 //     fields: [FieldError]
@@ -84,16 +68,6 @@ const {
 //     errors: [String!]
 //   }
 // `;
-
-// // const resolvers = {
-// //     Query: {
-// //         stories: resolver(models.Story),
-// //         feeds: resolver(models.Feed),
-// //         feed: resolver(models.Feed),
-//     },
-//     Mutation: {
-//     }
-// };
 
 resolver.contextToOptions = { [EXPECTED_OPTIONS_KEY]: EXPECTED_OPTIONS_KEY };
 
@@ -119,14 +93,25 @@ let storyType = new GraphQLObjectType({
     description: 'A RSS story',
     fields: {
         id: globalIdField(models.Story.name),
-
-        //{
-        //    type: globalIdField(models.Story.name),
-        //    description: 'The id of the story.',
-        //},
+        permalink: {
+            type: GraphQLString,
+            description: 'The permalink to the story.',
+        },
+        entry_id: {
+            type: GraphQLString,
+            description: 'ID of the story.',
+        },
+        published: {
+            type: GraphQLString,
+            description: 'Publishing date of story',
+        },
+        body: {
+            type: GraphQLString,
+            description: 'Body of the story',
+        },
         title: {
             type: GraphQLString,
-            description: 'The name of the user.',
+            description: 'The title of the stroy.',
         },
         feed: {
             type: feedType,
