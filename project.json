@@ -1,0 +1,10 @@
+{
+  "project": "fxnet-rss-feeder-nodejs",
+    
+  "git": "github.com/fixingthenet/fxnet-rss-feeder-nodejs",
+  "path": "fxnet-rss-feeder-nodejs",
+  "docker": {
+    "repo": "fxnet",
+    "name": "fxnet-rss-feeder-nodejs"
+  }
+}
