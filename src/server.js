@@ -101,6 +101,19 @@ let storyType = new GraphQLObjectType({
             type: GraphQLString,
             description: 'ID of the story.',
         },
+        last_opened_at: {
+            type: GraphQLString,
+            description: 'When the article was open last time.',
+            resolve: (obj) => {
+//                console.log(obj.UserOpen)
+                try {
+                    return obj.UserOpen.last_opened_at
+                } catch(e) {
+                    return null
+                }
+
+            }
+        },
         published: {
             type: GraphQLString,
             description: 'Publishing date of story',
@@ -124,8 +137,19 @@ let storyType = new GraphQLObjectType({
 const storyConnection = createConnection({
   name: 'stories',
   nodeType: storyType,
-  target: models.Story,
-  orderBy: new GraphQLEnumType({
+    target: function(source,args,ctx,info) {
+        var model=models.Story;
+
+        // join(left OpenStory) on story.id==useropen.story_id
+        // and (useropen.user_id is null or
+        // useropen.user_id == ctx.user.id )
+        console.log("secCtx:",ctx.secCtx.user.id)
+
+        return models.Story.scope(
+            { method: ['ofUserId', ctx.secCtx.user.id] }
+        )
+    },
+    orderBy: new GraphQLEnumType({
     name: 'orderBy',
     values: {
       AGE: {value: ['id', 'DESC']},
@@ -183,7 +207,14 @@ const schema = new GraphQLSchema({
 
             stories: {
                 type: storyConnection.connectionType,
-                resolve: storyConnection.resolve,
+                resolve: function(source,args,ctx,info) {
+                    //console.log("source",source)
+                    console.log("args",args)
+                    //console.log("ctx",ctx)
+                    //console.log("info",info)
+
+                    return storyConnection.resolve(source,args,ctx,info)
+                },
                 args: storyConnection.connectionArgs,
             },
 

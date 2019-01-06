@@ -20,17 +20,42 @@ module.exports = (sequelize, DataTypes) => {
         updated_at: {
             type: DataTypes.DATE
         }
-
     }, {
         createdAt: false,
         paranoid: false,
         underscored: true,
         tableName: 'stories',
+        scopes: {
+            ofUserId: function(userId) {
+                console.log("scoped:",
+                            userId,
+                            sequelize.models.UserOpen.name,
+                            sequelize.models.Story.name)
+
+                return {
+
+                    include: [{
+                        required: false,
+                        model: sequelize.models.UserOpen,
+                        attributes: [["last_opened_at","last_opened_at"]],
+                        where: {
+                            user_id: {
+                                [sequelize.Op.or]: [null, userId]
+                            }
+                        }
+                    }]
+
+
+                }
+            }
+        }
     });
     Story.associate = function(models) {
         console.log("Assoc: Story -> Feed", models.Feed.name)
         Story.Feed=Story.belongsTo(models.Feed, {foreignKey: 'feed_id',
-                                      as: 'feed'});
+                                                 as: 'feed'});
+        // we're faking!
+        Story.hasOne(models.UserOpen, {foreignKey: 'story_id'} )
         // associations can be defined here
     };
 
