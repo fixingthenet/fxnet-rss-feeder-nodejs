@@ -114,6 +114,19 @@ let storyType = new GraphQLObjectType({
 
             }
         },
+        read_later_at: {
+            type: GraphQLString,
+            description: 'When the article was bookmarked.',
+            resolve: (obj) => {
+                //                console.log(obj.UserOpen)
+                try {
+                    return obj.UserOpen.read_later_at
+                } catch(e) {
+                    return null
+                }
+
+            }
+        },
         published: {
             type: GraphQLString,
             description: 'Publishing date of story',

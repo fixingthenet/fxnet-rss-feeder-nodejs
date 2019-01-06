@@ -37,7 +37,6 @@ module.exports = (sequelize, DataTypes) => {
                     include: [{
                         required: false,
                         model: sequelize.models.UserOpen,
-                        attributes: [["last_opened_at","last_opened_at"]],
                         where: {
                             user_id: {
                                 [sequelize.Op.or]: [null, userId]
