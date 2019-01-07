@@ -12,6 +12,7 @@ import { GraphQLSchema,
          GraphQLNonNull,
          GraphQLInt,
          GraphQLString,
+         GraphQLBoolean,
          GraphQLID,
          GraphQLEnumType,
        } from 'graphql';
@@ -157,17 +158,26 @@ const storyConnection = createConnection({
         // and (useropen.user_id is null or
         // useropen.user_id == ctx.user.id )
         console.log("secCtx:",ctx.secCtx.user.id)
-
-        return models.Story.scope(
+        console.log("args:", args)
+        var scope=models.Story.scope(
             { method: ['ofUserId', ctx.secCtx.user.id] }
         )
+
+        if (args.onlyUnread) {
+            scope=scope.scope('onlyUnread')
+        }
+        if (args.onlyMarked) {
+            scope=scope.scope('onlyMarked')
+        }
+        return scope
+
     },
     orderBy: new GraphQLEnumType({
-    name: 'orderBy',
-    values: {
-      AGE: {value: ['id', 'DESC']},
-    }
-  }),
+        name: 'orderBy',
+        values: {
+            AGE: {value: ['id', 'DESC']},
+        },
+    }),
   // connectionFields: {
   //   total: {
   //     type: GraphQLInt,
@@ -228,7 +238,18 @@ const schema = new GraphQLSchema({
 
                     return storyConnection.resolve(source,args,ctx,info)
                 },
-                args: storyConnection.connectionArgs,
+                args: {
+                    ...storyConnection.connectionArgs,
+                    onlyUnread: {
+                        type: GraphQLBoolean,
+                        description: 'get only unread'
+                    },
+                    onlyMarked: {
+                        type: GraphQLBoolean,
+                        description: 'get only marked'
+                    },
+
+                }
             },
 
             node: nodeField,
