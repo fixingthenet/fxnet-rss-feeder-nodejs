@@ -12,6 +12,7 @@
     "dataloader-sequelize": "^1.7.4",
     "express": "^4.16.4",
     "graphql": "^0.13.1",
+    "graphql-date": "^1.0.3",
     "graphql-relay": "^0.5.5",
     "graphql-sequelize": "^9.0.4",
     "jsonwebtoken": "^8.4.0",

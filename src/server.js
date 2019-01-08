@@ -2,7 +2,10 @@ import { createContext, EXPECTED_OPTIONS_KEY } from 'dataloader-sequelize';
 import { resolver,
          createConnection,
          createNodeInterface} from 'graphql-sequelize';
-import { globalIdField } from 'graphql-relay';
+import { globalIdField,
+         fromGlobalId,
+         mutationWithClientMutationId,
+       } from 'graphql-relay';
 
 import models from './models';
 const {ApolloServer, gql } = require('apollo-server-express');
@@ -16,59 +19,14 @@ import { GraphQLSchema,
          GraphQLID,
          GraphQLEnumType,
        } from 'graphql';
+import GraphQLDate from 'graphql-date'
 
 // https://github.com/mickhansen/graphql-sequelize/blob/master/docs/relay.md
 const {
-  nodeInterface,
-  nodeField,
-  nodeTypeMapper
+    nodeInterface,
+    nodeField,
+    nodeTypeMapper,
 } = createNodeInterface(models.sequelize);
-
-//import sessionLogin from './api/session_login.js'
-//import changePassword from './api/changePassword.js'
-//import tokenHandler from './lib/tokenHandler'
-//createFeed(feed: FeedInput): FeedResult
-//updateFeed(feedId: ID, feed: FeedInput): FeedResult
-//deleteFeed(feedId: ID): FeedResult
-// const typeDefs = gql`
-//   type Query {
-//     stories: [Story]
-//     feeds: [Feed]
-//     feed(feedId: ID): Feed
-//   }
-
-//   type Mutation {
-//     openStory(storyId: ID!): Success
-//     unOpenStory(storyId: ID!): Success
-//     markStory(storyId: ID!): Success
-//     unMarkStory(storyId: ID!): Success
-//   }
-
-//   type FeedResult {
-//     id: ID
-//     errors: InputError
-//   }
-
-//   type Success {
-//     success: Boolean
-//     errors: InputError
-//   }
-
-//   type FeedInput {
-//     name: String!
-//     url: String!
-//   }
-
-//   type InputError {
-//     base: String
-//     fields: [FieldError]
-//   }
-
-//   type FieldError {
-//     name: String!
-//     errors: [String!]
-//   }
-// `;
 
 resolver.contextToOptions = { [EXPECTED_OPTIONS_KEY]: EXPECTED_OPTIONS_KEY };
 
@@ -103,7 +61,7 @@ let storyType = new GraphQLObjectType({
             description: 'ID of the story.',
         },
         last_opened_at: {
-            type: GraphQLString,
+            type: GraphQLDate,
             description: 'When the article was open last time.',
             resolve: (obj) => {
 //                console.log(obj.UserOpen)
@@ -116,7 +74,7 @@ let storyType = new GraphQLObjectType({
             }
         },
         read_later_at: {
-            type: GraphQLString,
+            type: GraphQLDate,
             description: 'When the article was bookmarked.',
             resolve: (obj) => {
                 //                console.log(obj.UserOpen)
@@ -129,7 +87,7 @@ let storyType = new GraphQLObjectType({
             }
         },
         published: {
-            type: GraphQLString,
+            type: GraphQLDate,
             description: 'Publishing date of story',
         },
         body: {
@@ -178,27 +136,36 @@ const storyConnection = createConnection({
             AGE: {value: ['id', 'DESC']},
         },
     }),
-  // connectionFields: {
-  //   total: {
-  //     type: GraphQLInt,
-  //     resolve: ({source}) => {
-  //       return source.countTasks();
-  //     }
-  //   }
-  // },
-  // edgeFields: {
-  //   wasCreatedByUser: {
-  //     type: GraphQLBoolean,
-  //     resolve: (edge) => {
-  //       /*
-  //        * We attach the connection source to edges
-  //        */
-  //       return edge.node.createdBy === edge.source.id;
-  //     }
-  //   }
-  // }
 });
 
+var openStoryMutation = mutationWithClientMutationId({
+    name: 'openStory',
+    inputFields: {
+        storyId: {
+            type: new GraphQLNonNull(GraphQLID),
+
+        }
+    },
+    outputFields: {
+        storyId: {
+            type: new GraphQLNonNull(GraphQLID),
+            resolve: (data) => data.storyId,
+
+        },
+        last_opened_at: {
+            type: GraphQLDate,
+            resolve: (data) => data.last_opened_at,
+        }
+    },
+    mutateAndGetPayload: async ({storyId},ctx,args) => {
+        var realStoryId=fromGlobalId(storyId).id;
+        console.log("storyId: ", realStoryId,ctx.secCtx.user.id)
+        var result = await models.Story.markOpened(realStoryId,
+                                                   ctx.secCtx.user.id)
+        console.log("result:", result)
+        return result
+    }
+});
 
 nodeTypeMapper.mapTypes({
     [models.Story.name]: storyType,
@@ -208,8 +175,15 @@ nodeTypeMapper.mapTypes({
 });
 
 const schema = new GraphQLSchema({
+    name: 'RootType',
+    mutation: new GraphQLObjectType({
+        name: 'Mutations',
+        fields: {
+            openStory: openStoryMutation,
+        }
+    }),
     query: new GraphQLObjectType({
-        name: 'RootType',
+        name: 'Queries',
         fields: {
             story: {
                 type: storyType,

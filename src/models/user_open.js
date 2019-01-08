@@ -8,6 +8,9 @@ module.exports = (sequelize, DataTypes) => {
         read_later_at: {
             type: DataTypes.DATE
         },
+        user_id: {
+            type: DataTypes.INTEGER
+        },
     }, {
         createdAt: false,
         updatedAt: false,
