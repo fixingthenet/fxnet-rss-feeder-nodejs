@@ -75,7 +75,7 @@ module.exports = (sequelize, DataTypes) => {
         Story.hasOne(models.UserOpen, {foreignKey: 'story_id'} )
         // associations can be defined here
     };
-    Story.markOpened = async function(storyId,userId) {
+    Story.open = async function(storyId,userId) {
         var lo=new Date()
         console.log("find or create", storyId, userId)
         var res= await sequelize.models.UserOpen.findOrCreate({
@@ -84,7 +84,7 @@ module.exports = (sequelize, DataTypes) => {
                 user_id: userId,
             },
             defaults: {
-                last_opened_at: new Date()
+                last_opened_at: lo
             }
         })
 
@@ -95,6 +95,69 @@ module.exports = (sequelize, DataTypes) => {
             console.log("existing ....")
         }
         return { last_opened_at: lo, storyId: storyId }
+    }
+
+    Story.unopen = async function(storyId,userId) {
+        console.log("find or create", storyId, userId)
+        var res= await sequelize.models.UserOpen.findOrCreate({
+            where: {
+                story_id: storyId,
+                user_id: userId,
+            },
+            defaults: {
+                last_opened_at: null
+            }
+        })
+
+        if (res[1]) {
+            console.log("created ....")
+        } else {
+            await res[0].update({last_opened_at: null})
+            console.log("existing ....")
+        }
+        return { storyId: storyId }
+    }
+
+    Story.bookmark = async function(storyId,userId) {
+        var lo=new Date()
+        console.log("find or create", storyId, userId)
+        var res= await sequelize.models.UserOpen.findOrCreate({
+            where: {
+                story_id: storyId,
+                user_id: userId,
+            },
+            defaults: {
+                read_later_at: lo
+            }
+        })
+
+        if (res[1]) {
+            console.log("created ....")
+        } else {
+            await res[0].update({read_later_at: lo})
+            console.log("existing ....")
+        }
+        return { read_later_at: lo, storyId: storyId }
+    }
+    Story.unbookmark = async function(storyId,userId) {
+        console.log("find or create", storyId, userId)
+        var res= await sequelize.models.UserOpen.findOrCreate({
+            where: {
+                story_id: storyId,
+                user_id: userId,
+            },
+            defaults: {
+                read_later_at: null
+            }
+        })
+
+        if (res[1]) {
+            console.log("created ....")
+        } else {
+            await res[0].update({read_later_at: null})
+            console.log("existing ....")
+        }
+        return { read_later_at: null, storyId: storyId }
     }
     return Story;
 };

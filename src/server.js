@@ -160,12 +160,93 @@ var openStoryMutation = mutationWithClientMutationId({
     mutateAndGetPayload: async ({storyId},ctx,args) => {
         var realStoryId=fromGlobalId(storyId).id;
         console.log("storyId: ", realStoryId,ctx.secCtx.user.id)
-        var result = await models.Story.markOpened(realStoryId,
+        var result = await models.Story.open(realStoryId,
                                                    ctx.secCtx.user.id)
         console.log("result:", result)
         return result
     }
 });
+
+var unopenStoryMutation = mutationWithClientMutationId({
+    name: 'unopenStory',
+    inputFields: {
+        storyId: {
+            type: new GraphQLNonNull(GraphQLID),
+
+        }
+    },
+    outputFields: {
+        storyId: {
+            type: new GraphQLNonNull(GraphQLID),
+            resolve: (data) => data.storyId,
+
+        },
+    },
+    mutateAndGetPayload: async ({storyId},ctx,args) => {
+        var realStoryId=fromGlobalId(storyId).id;
+        console.log("storyId: ", realStoryId,ctx.secCtx.user.id)
+        var result = await models.Story.unopen(realStoryId,
+                                                   ctx.secCtx.user.id)
+        console.log("result:", result)
+        return result
+    }
+});
+
+
+var bookmarkStoryMutation = mutationWithClientMutationId({
+    name: 'bookmarkStory',
+    inputFields: {
+        storyId: {
+            type: new GraphQLNonNull(GraphQLID),
+
+        }
+    },
+    outputFields: {
+        storyId: {
+            type: new GraphQLNonNull(GraphQLID),
+            resolve: (data) => data.storyId,
+
+        },
+        read_later_at: {
+            type: GraphQLDate,
+            resolve: (data) => data.read_later_at,
+        }
+    },
+    mutateAndGetPayload: async ({storyId},ctx,args) => {
+        var realStoryId=fromGlobalId(storyId).id;
+        console.log("storyId: ", realStoryId,ctx.secCtx.user.id)
+        var result = await models.Story.bookmark(realStoryId,
+                                                   ctx.secCtx.user.id)
+        console.log("result:", result)
+        return result
+    }
+});
+
+var unbookmarkStoryMutation = mutationWithClientMutationId({
+    name: 'unbookmarkStory',
+    inputFields: {
+        storyId: {
+            type: new GraphQLNonNull(GraphQLID),
+
+        }
+    },
+    outputFields: {
+        storyId: {
+            type: new GraphQLNonNull(GraphQLID),
+            resolve: (data) => data.storyId,
+
+        },
+    },
+    mutateAndGetPayload: async ({storyId},ctx,args) => {
+        var realStoryId=fromGlobalId(storyId).id;
+        console.log("storyId: ", realStoryId,ctx.secCtx.user.id)
+        var result = await models.Story.unbookmark(realStoryId,
+                                                 ctx.secCtx.user.id)
+        console.log("result:", result)
+        return result
+    }
+});
+
 
 nodeTypeMapper.mapTypes({
     [models.Story.name]: storyType,
@@ -180,6 +261,9 @@ const schema = new GraphQLSchema({
         name: 'Mutations',
         fields: {
             openStory: openStoryMutation,
+            unopenStory: unopenStoryMutation,
+            bookmarkStory: bookmarkStoryMutation,
+            unbookmarkStory: unbookmarkStoryMutation,
         }
     }),
     query: new GraphQLObjectType({
