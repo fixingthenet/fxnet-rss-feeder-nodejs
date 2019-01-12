@@ -117,18 +117,18 @@ const storyConnection = createConnection({
         // useropen.user_id == ctx.user.id )
         console.log("secCtx:",ctx.secCtx.user.id)
         console.log("args:", args)
-        var scope=models.Story.scope(
-            { method: ['ofUserId', ctx.secCtx.user.id] }
-        )
+        var scopes=[{ method: ['ofUserId', ctx.secCtx.user.id] }]
 
         if (args.onlyUnread) {
-            scope=scope.scope('onlyUnread')
+            console.log("Filtering unread")
+            scopes.push({ method: ['onlyUnread', ctx.secCtx.user.id] })
         }
         if (args.onlyMarked) {
-            scope=scope.scope('onlyMarked')
+            console.log("Filtering bookmarked")
+            scopes.push({ method: ['onlyMarked', ctx.secCtx.user.id] })
         }
-        return scope
-
+        console.log("scopes: ", scopes)
+        return models.Story.scope(scopes)
     },
     orderBy: new GraphQLEnumType({
         name: 'orderBy',

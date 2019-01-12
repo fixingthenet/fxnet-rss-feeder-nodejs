@@ -26,21 +26,29 @@ module.exports = (sequelize, DataTypes) => {
         underscored: true,
         tableName: 'stories',
         scopes: {
-            onlyUnread: function() {
+            onlyUnread: function(userId) {
                 return {
                     include: [{
                         required: false,
                         model: sequelize.models.UserOpen,
-                        where: { "last_opened_at": null}
+                        where: { last_opened_at: null,
+                                 user_id: {
+                                     [sequelize.Op.or]: [null, userId]
+                                 }
+                               }
                     }]
                 }
             },
-            onlyMarked: function() {
+            onlyMarked: function(userId) {
                 return {
                     include: [{
-                        required: false,
+                        required: true,
                         model: sequelize.models.UserOpen,
-                        where: { "read_later_at": {[sequelize.Op.ne]:null}}
+                        where: {
+                            read_later_at: {[sequelize.Op.ne]:null},
+                            user_id: userId
+                        }
+
                     }]
                 }
             },
