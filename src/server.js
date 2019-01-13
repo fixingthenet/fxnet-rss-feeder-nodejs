@@ -138,6 +138,53 @@ const storyConnection = createConnection({
     }),
 });
 
+const feedConnection = createConnection({
+  name: 'feeds',
+  nodeType: feedType,
+    target: function(source,args,ctx,info) {
+        //var model=models.Feed;
+
+        // join(left OpenStory) on story.id==useropen.story_id
+        // and (useropen.user_id is null or
+        // useropen.user_id == ctx.user.id )
+        console.log("secCtx:",ctx.secCtx.user.id)
+        console.log("args:", args)
+        return models.Feed
+    },
+//    orderBy: new GraphQLEnumType({
+//        name: 'orderBy',
+//        values: {
+//            AGE: {value: ['id', 'DESC']},
+//        },
+//    }),
+});
+
+var deleteFeedMutation = mutationWithClientMutationId({
+    name: 'deleteFeed',
+    inputFields: {
+        feedId: {
+            type: new GraphQLNonNull(GraphQLID),
+
+        }
+    },
+    outputFields: {
+        feedId: {
+            type: new GraphQLNonNull(GraphQLID),
+            resolve: (data) => data.feedId,
+
+        },
+    },
+    mutateAndGetPayload: async ({feedId},ctx,args) => {
+        var realId=fromGlobalId(feedId).id;
+        console.log("feedId: ", realId,ctx.secCtx.user.id)
+        var result = await models.Feed.delete(realId,
+                                             ctx.secCtx.user.id)
+        console.log("result:", result)
+        return result
+    }
+});
+
+
 var openStoryMutation = mutationWithClientMutationId({
     name: 'openStory',
     inputFields: {
@@ -264,6 +311,7 @@ const schema = new GraphQLSchema({
             unopenStory: unopenStoryMutation,
             bookmarkStory: bookmarkStoryMutation,
             unbookmarkStory: unbookmarkStoryMutation,
+            deleteFeed: deleteFeedMutation,
         }
     }),
     query: new GraphQLObjectType({
@@ -279,12 +327,19 @@ const schema = new GraphQLSchema({
                 resolve: resolver(models.Story)
             },
             feeds: {
-                // The resolver will use `findOne` or `findAll` depending on whether the field it's used in is a `GraphQLList` or not.
-                type: new GraphQLList(feedType),
-                args: {
-                },
-                resolve: resolver(models.Feed)
+            type: feedConnection.connectionType,
+            resolve: function(source,args,ctx,info) {
+                //console.log("source",source)
+                console.log("args",args)
+                //console.log("ctx",ctx)
+                //console.log("info",info)
+
+                return feedConnection.resolve(source,args,ctx,info)
             },
+            args: {
+                ...storyConnection.connectionArgs,
+            }
+        },
 
             stories: {
                 type: storyConnection.connectionType,

@@ -5,6 +5,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             unique: true
         },
+        url: {
+            type: DataTypes.STRING,
+            unique: true
+        },
 
     }, {
         createdAt: false,
@@ -14,5 +18,14 @@ module.exports = (sequelize, DataTypes) => {
         tableName: 'feeds',
     });
 
+    Feed.delete = async function(feedId,userId) {
+        console.log("feed delete", feedId, userId)
+        var res= await sequelize.models.Feed.findOne({
+            where: {
+                id: feedId,
+            }})
+        await res.destroy()
+        return { feedId: feed.id }
+    }
     return Feed;
 };
