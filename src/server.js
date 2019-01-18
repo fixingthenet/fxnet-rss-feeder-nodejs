@@ -94,6 +94,10 @@ let storyType = new GraphQLObjectType({
             type: GraphQLString,
             description: 'Body of the story',
         },
+        safeBody: {
+            type: GraphQLString,
+            description: 'Sanatized Body of the story',
+        },
         title: {
             type: GraphQLString,
             description: 'The title of the stroy.',
@@ -117,16 +121,18 @@ const storyConnection = createConnection({
         // useropen.user_id == ctx.user.id )
         console.log("secCtx:",ctx.secCtx.user.id)
         console.log("args:", args)
-        var scopes=[{ method: ['ofUserId', ctx.secCtx.user.id] }]
+        var scopes=[]
 
         if (args.onlyUnread) {
             console.log("Filtering unread")
             scopes.push({ method: ['onlyUnread', ctx.secCtx.user.id] })
-        }
-        if (args.onlyMarked) {
+        } else if (args.onlyMarked) {
             console.log("Filtering bookmarked")
             scopes.push({ method: ['onlyMarked', ctx.secCtx.user.id] })
+        } else {
+            scopes.push({ method: ['ofUserId', ctx.secCtx.user.id] })
         }
+
         console.log("scopes: ", scopes)
         return models.Story.scope(scopes)
     },
@@ -179,6 +185,32 @@ var deleteFeedMutation = mutationWithClientMutationId({
         console.log("feedId: ", realId,ctx.secCtx.user.id)
         var result = await models.Feed.delete(realId,
                                              ctx.secCtx.user.id)
+        console.log("result:", result)
+        return result
+    }
+});
+var createFeedMutation = mutationWithClientMutationId({
+    name: 'createFeed',
+    inputFields: {
+        name: {
+            type: new GraphQLNonNull(GraphQLString),
+
+        },
+        url: {
+            type: new GraphQLNonNull(GraphQLString),
+
+        }
+    },
+    outputFields: {
+        feed: {
+            type: feedType,
+            resolve: (data) => data.feed,
+
+        },
+    },
+    mutateAndGetPayload: async (atts,ctx,args) => {
+        var result = await models.Feed.add(atts,
+                                              ctx.secCtx.user.id)
         console.log("result:", result)
         return result
     }
@@ -312,6 +344,7 @@ const schema = new GraphQLSchema({
             bookmarkStory: bookmarkStoryMutation,
             unbookmarkStory: unbookmarkStoryMutation,
             deleteFeed: deleteFeedMutation,
+            createFeed: createFeedMutation,
         }
     }),
     query: new GraphQLObjectType({
@@ -387,7 +420,7 @@ const server = new ApolloServer({
             var decoded = tokenHandler.verify(token)
             userId=decoded.user.id
         } catch (e) {
-            userId=5 //
+            userId=3 //
         }
         //      console.log("secCtx", user.id, token)
         const dataloaderContext = createContext(models.sequelize);

@@ -1,4 +1,6 @@
 'use strict';
+import striptags from 'striptags';
+import entities from 'entities';
 
 module.exports = (sequelize, DataTypes) => {
     const Story = sequelize.define('Story', {
@@ -31,12 +33,14 @@ module.exports = (sequelize, DataTypes) => {
                     include: [{
                         required: false,
                         model: sequelize.models.UserOpen,
-                        where: { last_opened_at: null,
-                                 user_id: {
-                                     [sequelize.Op.or]: [null, userId]
-                                 }
+                        where: {
+                                 user_id: userId
+
                                }
-                    }]
+                    }],
+                    where: {
+                        [sequelize.Op.and]: sequelize.literal(`last_opened_at is null and read_later_at is null`)
+                    }
                 }
             },
             onlyMarked: function(userId) {
@@ -75,6 +79,11 @@ module.exports = (sequelize, DataTypes) => {
             }
         }
     });
+
+    Story.prototype.safeBody=function() {
+        return entities.decodeHTML(striptags(this.body));
+    }
+
     Story.associate = function(models) {
         console.log("Assoc: Story -> Feed", models.Feed.name)
         Story.Feed=Story.belongsTo(models.Feed, {foreignKey: 'feed_id',
