@@ -1,0 +1,4 @@
+#!/bin/bash
+export PATH=$PATH:/code/node_modules/.bin
+#exec nodemon src/console.js --exec babel-node --presets es2015,stage-2
+exec babel-node src/importer.js --presets es2015,stage-2

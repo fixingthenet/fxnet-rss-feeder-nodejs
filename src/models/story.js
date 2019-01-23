@@ -84,6 +84,10 @@ module.exports = (sequelize, DataTypes) => {
         return entities.decodeHTML(striptags(this.body));
     }
 
+    Story.prototype.safeTitle=function() {
+        return entities.decodeHTML(striptags(this.title));
+    }
+
     Story.associate = function(models) {
         console.log("Assoc: Story -> Feed", models.Feed.name)
         Story.Feed=Story.belongsTo(models.Feed, {foreignKey: 'feed_id',

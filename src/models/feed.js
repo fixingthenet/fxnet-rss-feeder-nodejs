@@ -1,4 +1,6 @@
 'use strict';
+import FeedImporter from '../lib/feed_importer.js'
+
 module.exports = (sequelize, DataTypes) => {
     const Feed = sequelize.define('Feed', {
         name: {
@@ -8,6 +10,21 @@ module.exports = (sequelize, DataTypes) => {
         url: {
             type: DataTypes.STRING,
             unique: true
+        },
+        last_success_count: {
+            type: DataTypes.INTEGER,
+        },
+        last_failed_count: {
+            type: DataTypes.INTEGER,
+        },
+        last_failed_at: {
+            type: DataTypes.DATE,
+        },
+        last_success_at: {
+            type: DataTypes.DATE,
+        },
+        last_fetched_at: {
+            type: DataTypes.DATE,
         },
         feed_status_id: {
           type: DataTypes.INTEGER,
@@ -28,6 +45,27 @@ module.exports = (sequelize, DataTypes) => {
       Feed.FeedStatus=Feed.belongsTo(models.FeedStatus,
                                      {foreignKey: 'feed_status_id'})
     };
+
+
+    Feed.prototype.updateFailure= async function() {
+        var feed = await this.increment({last_failed_count: 1})
+        await feed.update({last_success_count: 0,
+                           last_failed_at: new Date(),
+                           last_fetched_at: new Date(),
+                          })
+        return feed
+
+    }
+
+    Feed.prototype.updateSuccess= async function() {
+        var feed = await this.increment({last_success_count: 1})
+        await feed.update({last_failed_count: 0,
+                           last_success_at: new Date(),
+                           last_fetched_at: new Date(),
+                          })
+        return feed
+
+    }
 
     Feed.delete = async function(feedId,userId) {
         console.log("feed delete", feedId, userId)

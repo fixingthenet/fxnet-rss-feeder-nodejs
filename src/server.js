@@ -102,6 +102,10 @@ let storyType = new GraphQLObjectType({
             type: GraphQLString,
             description: 'The title of the stroy.',
         },
+        safeTitle: {
+            type: GraphQLString,
+            description: 'Sanitized title of the stroy.',
+        },
         feed: {
             type: feedType,
             resolve: resolver(models.Story.Feed)

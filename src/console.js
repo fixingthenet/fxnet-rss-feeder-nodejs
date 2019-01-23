@@ -3,11 +3,26 @@
 
 import app from './app';
 
-var ctx={models: app.models}
+var ctx={models: app.models};
+var _ = 'new';
 var resolver = function(code) {
     // TODO: Log the answer in a database
     try {
-        console.log(eval(code))
+        var result = eval(code)
+        if (result && result.then) {
+            //console.log("then detected");
+            result.then(function(res) {
+                //console.log("resolved",res)
+                _ = res
+            }).catch(function(error){
+                //console.log("error:",error)
+                _ = error
+            })
+        } else {
+            //console.log("non then:", result)
+            _ = result
+        }
+        console.log(_)
     } catch(e) {
         console.log(e)
     }
@@ -21,9 +36,6 @@ app.start(false).then(() => {
     console.log("ctx.models is your friend")
 
     var readline = require('readline');
-
-
-
 
     var rl = readline.createInterface({
         input: process.stdin,
